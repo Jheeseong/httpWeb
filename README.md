@@ -305,3 +305,89 @@
   - 서버 to 서버, 앱 클라이언트, 웹 클라이언트(Ajax)
   - POST, PUT, PATCH 사용
   - Content-Type: application/json을 주로 사용 (사실상 표준)
+
+## HTTP 설계 예시
+### HTTP API 설계 - POST 기반 등록
+- 회원 목록 /members -> GET
+- 회원 등록 /members -> POST
+- 회원 조회 /members/{id} -> GET
+- 회원 수정 /members/{id} -> PATCH, PUT, POST
+- 회원 삭제 /members/{id} -> DELETE
+
+### POST - 신규 자원 등록 특징
+- 클라이언트는 등록될 리소스 URL 모름
+- 서버가 새로된 리소스 URI를 생성
+- 컬렉션
+  - 서버가 관리하는 리소스 디렉토리
+  - 서버가 리소스의 URI를 생성하고 관리
+  - 여기서 컬렉션은 /members
+
+### HTTP API 설계 - PUT 기반 등록
+- 파일 목록 /files -> GET
+- 파일 조회 /files/{filename} -> GET
+- 파일 등록 /files/{filename} -> PUT
+- 파일 삭제 /files/{filename} -> DELETE
+- 파일 대량 등록 /files -> POST
+
+### PUT - 신규 자원 등록 특징
+- 클라이언트가 리소스 URI를 알고 있어야 함
+- 클라이언트가 직접 리소스의 URI를 지정
+- 스토어
+  - 클라이언트가 관리하는 리소스 저장소
+  - 클라이언트가 리소스의 URI를 알고 관리
+  - 여기서 스토어는 /files
+
+### HTML FORM 사용
+- HTML FORM은 GET, POST만 지원
+- AJAX같은 기술 사용으로 해결 가능
+- 순수 HTML, HTML FORM은 GET, POST만 지원하므로 제약
+
+### HTTP API 설계 - HTML FORM 사용
+- 회원 목록 /members -> GET
+- 회원 등록 폼 /members/new -> GET
+- 회원 등록 /members/new, /members -> POST
+- 회원 조회 /members/{id} -> GET
+- 회원 수정 폼 /members/{id}/edit -> GET
+- 회원 수정 /members/{id}/edit, /members/{id} -> POST
+- 회원 삭제 /members/{id}/delete -> POST
+
+### HTML FORM - 등록 특징
+- HTML FORM은 GET, POST만 지원
+- 컨트롤 URI
+  - 제약 해결을 위한 동사로 된 리소스 경로 사용
+  - POST의 /new, /edit, /delete가 컨트롤 URI
+
+## HTTP 상태코드
+- 1XX(Informational) : 요청이 수신되어 처리 중
+- 2XX(Successful) : 요청 정상 처리
+- 3XX(Redirection) : 요청을 완료하려면 추가 행동이 필요
+  
+
+- 4XX(Client Error) : 클라이언트 오류
+- 5XX(Server Error) : 서버 오류
+
+### 2XX(Successful)
+- 200 : 클라이언트 요청을 정상 처리
+- 201 : 요청 성공 후 새로운 리소스 생성
+- 202 : 요청이 접수되었으나 처리 완료 X
+- 204 : 서버가 요청을 수행하였으나, 응답 페이로드에 보낼 데이터 X
+
+### 3XX(Redirection)
+- Redirection : 웹 브라우저는 3XX 응답의 결과에 Location 헤더가 있으면, Location 위치로 자동 이동
+![image](https://user-images.githubusercontent.com/96407257/153217508-a3269864-32a8-4ed0-8df1-a849624cf2ba.png)  
+- PRG : Post/Redirect/Get - 
+- 영구 리다이렉션 (301, 308)
+  - 리소스의 URI가 영구적으로 이동
+  - 원래 URL 사용X
+  - 검색 엔진 등에서도 변경 인지
+  - 301(리다이렉트 시 요청 메서드가 GET으로 변경)
+  - 308(301과 기능 동일, 리다이렉트 시 요청 메서드와 본문 유지)
+![image](https://user-images.githubusercontent.com/96407257/153218278-08047939-04be-4aaf-a41e-fc648e356986.png)  
+
+![image](https://user-images.githubusercontent.com/96407257/153218329-c173e5b8-2656-486f-93ee-fa2b5f280bd3.png)  
+- 일시 리다이렉션 (302, 307, 308)
+  - 리소스의 URI가 일시적 변경
+  - 검색 엔진 등에서 URL 변경 X
+  - 302(리다이렉트 시 요청 메서드가 GET으로 변하고, 본문 제거 가능성 존재)
+  - 307(302와 기능 동일, 리다이렉트 시 요청 메서드와 본문 유지)
+  - 303(302와 기능 동일, 리다이렉트 시 요청 메서드가 GET으로 변경)
