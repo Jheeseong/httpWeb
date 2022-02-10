@@ -306,7 +306,7 @@
   - POST, PUT, PATCH 사용
   - Content-Type: application/json을 주로 사용 (사실상 표준)
 
-# v1.2 2/9
+# v1.3 2/9
 ## HTTP 설계 예시
 ### HTTP API 설계 - POST 기반 등록
 - 회원 목록 /members -> GET
@@ -362,8 +362,6 @@
 - 1XX(Informational) : 요청이 수신되어 처리 중
 - 2XX(Successful) : 요청 정상 처리
 - 3XX(Redirection) : 요청을 완료하려면 추가 행동이 필요
-  
-
 - 4XX(Client Error) : 클라이언트 오류
 - 5XX(Server Error) : 서버 오류
 
@@ -376,7 +374,15 @@
 ### 3XX(Redirection)
 - Redirection : 웹 브라우저는 3XX 응답의 결과에 Location 헤더가 있으면, Location 위치로 자동 이동
 ![image](https://user-images.githubusercontent.com/96407257/153217508-a3269864-32a8-4ed0-8df1-a849624cf2ba.png)  
-- PRG : Post/Redirect/Get - 
+- PRG(Post/Redirect/Get)
+  - POST로 주문 후 웹 브라우저 새로고침 시 다시 요청하여 중복 주문이 될 가능성 존재
+  - PRG를 통해 해결 가능 
+  - POST로 주문 후 주문 결과 화면을 GET 메서드로 리다이렉트
+  - 새로고침을 해도 결과 화면을 GET으로 조회
+  - 중복 주문 대신에 결과 화면만 GET으로 다시 요청  
+
+![image](https://user-images.githubusercontent.com/96407257/153421671-0d383989-cc6c-4810-b4ff-c6f71aa3786d.png)
+
 - 영구 리다이렉션 (301, 308)
   - 리소스의 URI가 영구적으로 이동
   - 원래 URL 사용X
@@ -386,9 +392,128 @@
 ![image](https://user-images.githubusercontent.com/96407257/153218278-08047939-04be-4aaf-a41e-fc648e356986.png)  
 
 ![image](https://user-images.githubusercontent.com/96407257/153218329-c173e5b8-2656-486f-93ee-fa2b5f280bd3.png)  
-- 일시 리다이렉션 (302, 307, 308)
+- 일시 리다이렉션 (302, 307, 303)
   - 리소스의 URI가 일시적 변경
   - 검색 엔진 등에서 URL 변경 X
   - 302(리다이렉트 시 요청 메서드가 GET으로 변하고, 본문 제거 가능성 존재)
   - 307(302와 기능 동일, 리다이렉트 시 요청 메서드와 본문 유지)
   - 303(302와 기능 동일, 리다이렉트 시 요청 메서드가 GET으로 변경)
+
+- 기타 리다이렉션 (300, 304)
+  - 300(Multiple Choices) : 안 씀
+  - 304(Not Modified) : 캐시를 목적으로 사용, 클라이언트에게 리소스가 수정되지 않았음을 알림, 따라서 클라이언트는 로컬 PC에 저장된 캐시를 재사용(캐시로 리다이렉트)
+
+### 4XX(Client Error)
+- 400(클라이언트가 잘못된 요청을 해서 서버가 요청을 처리X)
+- 401(클라이언트가 해당 리소스에 대한 인증이 필요)
+  - 인증이 되지 않음
+  - 인증(Authentication): 본인이 누구인지 확인, (로그인)
+  - 인가(Authorization): 권한부여
+- 403(서버가 요청을 이해했지만 승인 거부)
+- 404(요청 리소스를 찾을 수 없음)
+
+### 5XX(Server Error)
+- 500(서버 문제로 오류 발생)
+- 503(서비스 이용 불가)
+
+# v1.4 2/10
+# HTTP 헤더
+- header-field : field-name ":" OWS field-value OWS (OWS:띄어쓰기 허용)
+![image](https://user-images.githubusercontent.com/96407257/153423135-cb819108-2e7f-4f45-b27f-90ed3359d380.png)  
+- HTTP 전송에 필요한 모든 부가정보
+- 필요 시 임의의 헤더 추가 가능
+
+## RFC723X 변화
+- 엔티티(Entity) -> 표현(Representation)
+- Representation = representation Metadata + Representation Data
+- 표현 = 표현 메타데이터 + 표현 데이터
+
+# HTTP BODY
+![image](https://user-images.githubusercontent.com/96407257/153423937-89165efd-73f9-4355-8571-4da5e0b9e8bc.png)  
+- 메세지 본문(message body)을 통해 표현 데이터 전달
+- 메세지 본문 = 페이로드(payload)
+- **표현**은 요청이나 응답에서 전달할 실제 데이터
+- **표현 헤더는 표현 데이터**를 해석할 수 있는 정보 제공
+  - 데이터 유형(html, json), 데이터 길이, 압축 정보 등등
+
+## 표현(Representation)
+- Content-Type : 표현 데이터의 형식
+  - 미디어 타입, 문자 인코딩
+- Content-Encoding : 표현 데이터의 압축 방식
+  - 표현 데이터를 압축하기 위해 사용
+  - 데이터를 전달하는 곳에서 압축 후 인코딩 헤더 추가
+  - 데이터 읽는 족에서 인코딩 헤더의 정보로 압축 해제
+- Content-Language : 표현 데이터의 자연 언어
+  - 표현 데이터의 자연 언어
+- Content-Length : 표현 데이터의 길이
+  - 바이트 단위
+## 협상(클라이언트가 선호하는 표현 요청)
+- Accept: 클라이언트가 선호하는 미디어 타입 전달
+- Accept-Charset: 클라이언트가 선호하는 문자 인코딩
+- Accept-Encoding: 클라이언트가 선호하는 압축 인코딩
+- Accept-Language: 클라이언트가 선호하는 자연 언어
+
+![image](https://user-images.githubusercontent.com/96407257/153425117-bfd190ea-ebe7-4908-a6aa-929af6c4855a.png)
+
+## 협상과 우선순위(1)(Quality Values(q))
+![image](https://user-images.githubusercontent.com/96407257/153425314-57b588ce-4b14-49b2-8217-8363ef9295dd.png)  
+- Quality Values(q) 값 사용
+- 0~1, 클수록 높은 우선순위
+- 생략 시 1
+
+## 협상과 우선순위(2)
+![image](https://user-images.githubusercontent.com/96407257/153425545-93d98194-ec0e-4488-94dc-c430474fb865.png)  
+- 구체적인 것이 우선한다
+1. text/plain;format=flowed
+2. text/plain
+3. text/*
+4. * / *
+
+## 협상과 우선순위(3)
+- Accept: text/*;q=0.3, text/html;q=0.7, text/html;level=1, text/html;level=2;q=0.4, */*;q=0.5
+- 구체적인 것을 기준으로 미디어 타입을 맞춤
+
+## 단순 전송(Content-Length)
+![image](https://user-images.githubusercontent.com/96407257/153426446-007f7f24-cc31-47e5-beb3-62ab4734a81f.png)
+
+## 압축 전송(Content-Encoding)
+![image](https://user-images.githubusercontent.com/96407257/153426542-add538f7-102b-404a-ad8c-744c6563bb0b.png)
+
+## 분할 전송(Transfer-Encoding)
+![image](https://user-images.githubusercontent.com/96407257/153426691-aa94375c-6b94-4fa5-9c77-a51beda8afb7.png)
+
+## 범위 전송(Range, Content-Range)
+![image](https://user-images.githubusercontent.com/96407257/153426837-10f6b77d-4566-471a-bda1-eb7a816548ee.png)
+
+# 일반 정보
+- From : 유저 에이전트의 이메일 정보
+- Referer : 이전 웹 페이지 주소
+- User-Agent : 유저 에이전트 애플리케이션 정보
+- Server : 요청을 처리하는 오리진 서버의 소프트웨어 정보
+- Date : 메세지가 생성된 날짜
+
+## From(유저 에이전트의 이메일 정보)
+- 일반적으로 잘 사용X
+- 검색 엔진 같은 곳에서 주로 사용
+- 요청에서 사용
+
+## Referer(이전 웹 페이지 주소)
+- 현재 요청된 페이지의 이전 웹 페이지 주소
+- A -> B 로 이동하는 경우, B를 요청할 때 Referer: A를 포함해서 요청
+- Referer를 사용해서 유입 경로 분석 가능
+- 요청에서 사용
+
+## User-Agent(유저 에이전트 애플리케이션 정보)
+- 클라이언트의 애플리케이션 정보(웹 브라우저 정보 등등)
+- 통계 정보
+- 어떤 종류의 브라우저에서 장애가 발생하는지 파악 가능
+- 요청에서 사용
+
+## Server(요청을 처리하는 ORIGIN 서버의 소프트웨어 정보)
+- Server : Apache/2.2.22(Debian)
+- Server : nginx
+- 응답에서 사용
+
+## Date(메세지가 발생한 날짜와 시간)
+- Date: Tue, 15 Nov 1994 08:12:31 GMT
+- 응답에서 사용
