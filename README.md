@@ -517,3 +517,95 @@
 ## Date(메세지가 발생한 날짜와 시간)
 - Date: Tue, 15 Nov 1994 08:12:31 GMT
 - 응답에서 사용
+
+# v1.5 2/11
+# 특별한 정보
+- Host : 요청한 호스트 정보(도메인)
+- Location : 페이지 리다이렉션
+- Allow : 허용 가능한 HTTP 메서드
+- Retry-After : 유저 에이전트가 다음 요청을 하기까지 기다리는 시간
+
+## Host(요청한 호스트 정보)
+![image](https://user-images.githubusercontent.com/96407257/153586074-91b0614e-5cd7-40d4-ba6c-62fb0e48f29b.png)
+- 요청에서 사용, 필수
+- 하나의 서버가 여러 도메인을 처리해야 할 때
+- 하나의 IP주소에 여러 도메인이 적용되어 있을 때
+- 가상호스트를 통해 여러 도메인을 한번에 처리 가능, 실제 애플리케이션이 여러 개 구동 가능
+
+## Location(페이지 리다이렉션)
+- 웹 브라우저는 3xx 응답 결과에 Location 헤더가 있으면, Location위치로 자동 이동
+- 201 : Location 값은 요청에 의해 생성된 리소스 URI
+- 3xx : Location 값은 요청을 자동으로 리다이렉션하기 위한 대상 리소스를 가리킴
+
+## Allow(허용 가능한 HTTP 메서드)
+- 405(Method Not Allowed) 에서 응답에 포함해야함
+- Allow : GET, HEAD, PUT
+
+## Retry-After(유저 에이전트가 다음 요청까지 기다리는 시간)
+- 503(Service Unavailable) : 서비스가 언제까지 불능인지 알려줌
+
+# 인증
+- Authorization : 클라이언트 인증 정보를 서버에 전달
+- WWW-Authenticate : 리소스 접근 시 필요한 인증 방법 정의
+
+## Authorization(클라이언트 인즈 정보를 서버에 전달)
+- Authorization: Basic xxxxxxxxxxxxxxxx
+
+## WWW-Authenticate(리소스 접근 시 피룡한 인증 방법 정의)
+- 리소스 접근 시 필요한 인증 방법 정의
+- 401 Unauthorized 응답과 함께 사용
+- WWW-Authenticate: Newauth realm="apps", type=1, title="Login to \"apps\"", Basic realm="simple"
+
+# 쿠키
+- Set-Cookie : 서버에서 클라이언트로 쿠키 전달(응답)
+- Cookie : 클라이언트가 서버에서 받은 쿠키를 저장하고, HTTP 요청 시 서버로 전달
+- 쿠키 미사용 시
+  - 로그인 후 재접속을 하였을 때 서버가 재연결되어 초기화가 됨 -> HTTP는 무상태(Stateless) 프로토콜이기 때문.
+  - 모든 요청에 사용자 정보가 포함되어야 함
+- 쿠키 사용 시
+  - 서버가 클라이언트에 보내는 정보를 쿠키 저장소에 저장
+  - 로그인 이후 재접속 시 쿠키 저장소에 저장된 정보를 불러온 후 서버에 전송
+- 사용처
+  - 사용자 로그인 세션 관리
+  - 광고 정보 트래킹
+- 쿠키 정보는 항상 서버에 전송
+  - 네트워크 트래픽 추가 유발
+  - 최소한의 정보만 사용
+- 보안에 민감한 데이터는 쿠키에 저장 X
+  - 모든 요청에 쿠키 정보가 자동 포함
+
+## 쿠키 - 생명주기
+- Set-Cookie : expires=Sat, 26-Dec-2020 04:39:21 GMT
+  - 만료일이 되면 쿠키 삭제
+- Set-Cookie : max-age = 3600(3600초)
+  - 0이나 음수를 지정하면 쿠키 삭제
+- 세션 쿠키 : 만료 날짜를 생략하면 브라우저 종료 시 까지만 유지
+- 영속 쿠키 : 만료 날짜를 입력하면 해당 날짜까지 유지
+
+## 쿠키 - 도메인
+- 명시 : 명시한 문서 기준 도메인 + 서브 도메인 포함
+  - domain=example.org를 지정해서 쿠키 생성
+- 생략 : 현재 문서 기준 도메인만 적용
+  - example.org에서 쿠키를 생성하고 domain 지정을 생략
+
+## 쿠키 - 경로
+- 이 경로를 포함한 하위 경로 페이지만 쿠키 접근
+- 일반적으로 path=/ 루트로 지정
+- ex)
+  - path=/home 지정
+  - /home -> 가능
+  - /home/level1 -> 가능
+  - /home/level1/level2 -> 가능
+  - /hello -> 불가능
+
+## 쿠키 - 보안
+- Secure
+  - 쿠키는 http,https를 구분하지 않고 전송
+  - Secure를 적용하면 https인 경우만 전송
+- HttpOnly
+  - XSS 공격 방지
+  - 자바스크립트에서 접근 불가
+  - HTTP 전송에만 전송
+- SameSite
+  - XSRF 공격 방지
+  - 요청 도메인과 쿠키에 설정된 도메인이 같은 경우만 쿠키 전송
